@@ -9,7 +9,6 @@ ActiveRecord::Schema.define do
     t.text :soap
     t.text :access
     t.text :entity
-    t.text :enquiry
     t.timestamps
   end
 
