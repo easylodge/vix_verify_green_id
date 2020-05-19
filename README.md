@@ -1,6 +1,6 @@
 # VixverifyGreenId
 
-Ruby gem to make requests to Vix Verify's Green ID Identity Verification service. Website: [https://www.vixverify.com/greenid-services/](https://www.vixverify.com)
+Ruby gem to make requests to Vix Verify's Green ID Identity Verification service. Website: [https://www.vixverify.com](https://www.vixverify.com/greenid-services/)
 
 
 ## Installation
