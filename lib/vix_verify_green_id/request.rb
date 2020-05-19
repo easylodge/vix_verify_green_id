@@ -18,8 +18,16 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
     end
   end
 
+  def dom_information
+    if self.verification_id.present?
+      self.to_dom("dyn:GetVerificationResult", self.get_result)
+    else
+      self.to_dom("dyn:registerVerification", self.register_verification)
+    end
+  end
+
   def to_xml_body
-    doc = self.to_dom("dyn:registerVerification", self.register_verification).to_xml
+    doc = dom_information.to_xml
     self.xml = doc.gsub('<?xml version="1.0"?>','')
   end
 
@@ -83,7 +91,6 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
 
     { :"accountId" => self.access[:access_code],
       :"password" => self.access[:password],
-      :"verificationId" => self.entity[:verification_id],
       :"ruleId" => "default",
       :"name" => name,
       :"email" => self.entity[:email_address].to_s,
@@ -94,6 +101,13 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
       :"workPhone" => self.entity[:work_phone_number].to_s,
       :"mobilePhone" => self.entity[:mobile_phone_number].to_s,
       :"generateVerificationToken" => true
+    }
+  end
+
+  def get_result
+    { :"accountId" => self.access[:access_code],
+      :"password" => self.access[:password],
+      :"verificationId" => self.verification_id
     }
   end
 

@@ -1,8 +1,10 @@
 ActiveRecord::Schema.define do
   self.verbose = false
 
-  create_table :vixverify_green_id_requests do |t|
+  create_table :vix_verify_green_id_requests do |t|
     t.integer :ref_id
+    t.string :verification_id
+    t.string :verification_token
     t.text :xml
     t.text :soap
     t.text :access
@@ -11,7 +13,7 @@ ActiveRecord::Schema.define do
     t.timestamps
   end
 
-  create_table :vixverify_green_id_responses  do |t|
+  create_table :vix_verify_green_id_responses  do |t|
     t.text :headers
     t.integer :code
     t.text :xml
