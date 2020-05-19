@@ -1,5 +1,5 @@
 class CreateVixVerifyGreenIdResponse < ActiveRecord::Migration
-  def self.change
+  def change
     create_table :vix_verify_green_id_responses do |t|
       t.text :headers
       t.integer :code

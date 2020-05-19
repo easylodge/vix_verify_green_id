@@ -8,19 +8,19 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   validates :ref_id, presence: true
   validates :access, presence: true
   validates :entity, presence: true
-  validates :enquiry, presence: true
 
   def to_soap
     if self.entity
       self.to_xml_body
-      self.soap = self.add_envelope(self.xml, 'registerVerification')
+      self.soap = self.add_envelope(self.xml)
     else
       "No entity details - set your entity hash"
     end
   end
 
   def to_xml_body
-    self.xml = self.to_dom('request', self.register_verification)
+    doc = self.to_dom("dyn:registerVerification", self.register_verification).to_xml
+    self.xml = doc.gsub('<?xml version="1.0"?>','')
   end
 
   def to_dom(node, data, attrs={})
@@ -67,7 +67,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
         :'country' => (self.entity[:previous_address][:country])
     }
 
-    dob = self.entity[:date_of_birth]
+    dob = self.entity[:date_of_birth].to_date
 
     date_of_birth = {
       :"day" => dob.day,
@@ -81,7 +81,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
         { :'name' => "driversLicenceNumber", :'value' => (self.entity[:drivers_licence_number]) }
     ]
 
-    verification = { :"accountId" => self.access[:account_id],
+    { :"accountId" => self.access[:access_code],
       :"password" => self.access[:password],
       :"verificationId" => self.entity[:verification_id],
       :"ruleId" => "default",
@@ -93,26 +93,20 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
       :"homePhone" => self.entity[:home_phone_number].to_s,
       :"workPhone" => self.entity[:work_phone_number].to_s,
       :"mobilePhone" => self.entity[:mobile_phone_number].to_s,
-      :"generateVerificationToken" => true,
-      :"extraData" => extra_data
+      :"generateVerificationToken" => true
     }
-
-    extra_data.each { |data| verification[:'extraData'] << data }
-
-    verification
   end
 
   def mandatory_values_empty?(values_hash)
     values_hash.values.any? {|val| val.nil? || val.to_s.empty?}
   end
 
-  def add_envelope(xml_message, function)
+  def add_envelope(xml_message)
     "<soapenv:Envelope
       xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\"
       xmlns:dyn=\"http://dynamicform.services.registrations.edentiti.com/\">
       <soapenv:Header/>
-      <soapenv:Body><dyn:#{function}>#{xml_message}</dyn:#{function}>
-      </soapenv:Body>
+      <soapenv:Body>#{xml_message}</soapenv:Body>
     </soapenv:Envelope>"
   end
 
