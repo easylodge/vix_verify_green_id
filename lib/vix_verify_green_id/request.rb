@@ -9,6 +9,14 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   validates :access, presence: true
   validates :entity, presence: true
 
+  def account_id
+    self.access[:access_code]
+  end
+
+  def password
+    self.access[:password]
+  end
+
   def to_soap
     if self.entity
       self.to_xml_body
@@ -18,16 +26,8 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
     end
   end
 
-  def dom_information
-    if self.verification_id.present?
-      self.to_dom("dyn:GetVerificationResult", self.get_result)
-    else
-      self.to_dom("dyn:registerVerification", self.register_verification)
-    end
-  end
-
   def to_xml_body
-    doc = dom_information.to_xml
+    doc = self.to_dom("dyn:registerVerification", self.register_verification).to_xml
     self.xml = doc.gsub('<?xml version="1.0"?>','')
   end
 
@@ -83,14 +83,8 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
       :"year" => dob.year
     }
 
-    extra_data = [
-        { :'name' => 'greenid_passportdvs_number', :'value' => self.entity[:passport_number] },
-        { :'name' => "driversLicenceState", :'value' => (self.entity[:drivers_licence_state_code]) },
-        { :'name' => "driversLicenceNumber", :'value' => (self.entity[:drivers_licence_number]) }
-    ]
-
-    { :"accountId" => self.access[:access_code],
-      :"password" => self.access[:password],
+    { :"accountId" => account_id,
+      :"password" => password,
       :"ruleId" => "default",
       :"name" => name,
       :"email" => self.entity[:email_address].to_s,
@@ -104,12 +98,40 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
     }
   end
 
-  def get_result
-    { :"accountId" => self.access[:access_code],
-      :"password" => self.access[:password],
-      :"verificationId" => self.verification_id
+  def set_fields(source)
+    { :'accountId' => account_id, :'password' => password ,
+      :'verificationId' => self.verification_id, :'sourceId' => source[:key],
+      :'inputFields' => source[:values]
     }
   end
+
+  def source_field_values
+    passport_details = [
+        { input: { name: 'greenid_passportdvs_number', value: self.entity[:passport_number] } },
+        { input: { name: 'greenid_passportdvs_givenname', value: self.entity[:first_given_name].to_s} },
+        { input: { name: 'greenid_passportdvs_middlename', value: self.entity[:other_given_name].to_s } },
+        { input: { name: 'greenid_passportdvs_surname', value: self.entity[:family_name].to_s } },
+        { input: { name: 'greenid_passportdvs_dob', value: self.entity[:date_of_birth] } },
+        { input: { name: 'greenid_passportdvs_tandc', value: 'on' } }
+    ]
+
+
+    medicare_details = [
+        { input: { name: 'greenid_medicaredvs_number', value: (self.entity[:medicare_card_number]) } },
+        { input: { name: 'greenid_medicaredvs_nameOnCard', value: "#{self.entity[:family_name].to_s} #{self.entity[:other_given_name].to_s} #{self.entity[:first_given_name].to_s}" } },
+        { input: { name: 'greenid_medicaredvs_cardColour', value: (self.entity[:medicare_card_color]) } },
+        { input: { name: 'greenid_medicaredvs_individualReferenceNumber', value: (self.entity[:medicare_reference_number]) } },
+        { input: { name: 'greenid_medicaredvs_expiry', value: (self.entity[:medicare_card_expiry]) } },
+        { input: { name: 'greenid_medicaredvs_tandc', value: 'on' } } ]
+
+    [{ key: "passportdvs", values: passport_details }, { key: "medicaredvs", values: medicare_details }]
+  end
+
+  def source_xml_body(source)
+    doc = self.to_dom("dyn:setFields", self.set_fields(source)).to_xml
+    doc.gsub('<?xml version="1.0"?>','')
+  end
+
 
   def mandatory_values_empty?(values_hash)
     values_hash.values.any? {|val| val.nil? || val.to_s.empty?}
@@ -131,5 +153,9 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
     else
       "No soap envelope to post! - run to_soap"
     end
+  end
+
+  def post_source(source)
+    HTTParty.post(self.access[:url], body: self.add_envelope(self.source_xml_body(source)), headers: {'Content-Type' => 'text/xml', 'Accept' => 'text/xml'})
   end
 end
