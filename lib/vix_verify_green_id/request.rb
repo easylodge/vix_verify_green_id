@@ -52,6 +52,8 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   end
 
   def register_verification
+    info = {}
+
     name = {
        :"honorific" => self.entity[:title].to_s,
        :"givenName" => self.entity[:first_given_name].to_s,
@@ -59,43 +61,47 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
        :"surname" => self.entity[:family_name].to_s
     }
 
-    current_address = {
-        :'level' => (self.entity[:current_address][:level]),
-        :'suburb' => (self.entity[:current_address][:suburb]),
-        :'state' => (self.entity[:current_address][:state]),
-        :'postcode' => (self.entity[:current_address][:postcode]),
-        :'country' => (self.entity[:current_address][:country])
-    }
-
-    previous_address = {
-        :'level' => (self.entity[:previous_address][:level]),
-        :'suburb' => (self.entity[:previous_address][:suburb]),
-        :'state' => (self.entity[:previous_address][:state]),
-        :'postcode' => (self.entity[:previous_address][:postcode]),
-        :'country' => (self.entity[:previous_address][:country])
-    }
-
-    dob = self.entity[:date_of_birth].to_date
+    dob = (Date.parse(self.entity[:date_of_birth]) rescue nil)
 
     date_of_birth = {
-      :"day" => dob.day,
-      :"month" => dob.month,
-      :"year" => dob.year
+      :"day" => dob&.day,
+      :"month" => dob&.month,
+      :"year" => dob&.year
     }
 
-    { :"accountId" => account_id,
+    info = { :"accountId" => account_id,
       :"password" => password,
       :"ruleId" => "default",
       :"name" => name,
       :"email" => self.entity[:email_address].to_s,
-      :"currentResidentialAddress" => current_address,
-      :"previousResidentialAddress" => previous_address,
       :"dob" => date_of_birth,
       :"homePhone" => self.entity[:home_phone_number].to_s,
       :"workPhone" => self.entity[:work_phone_number].to_s,
       :"mobilePhone" => self.entity[:mobile_phone_number].to_s,
       :"generateVerificationToken" => true
     }
+
+    if self.entity[:current_address]
+      info[:"currentResidentialAddress"] = {
+          :'level' => (self.entity[:current_address][:level]),
+          :'suburb' => (self.entity[:current_address][:suburb]),
+          :'state' => (self.entity[:current_address][:state]),
+          :'postcode' => (self.entity[:current_address][:postcode]),
+          :'country' => (self.entity[:current_address][:country])
+      }
+    end
+
+    if self.entity[:previous_address]
+      info[:"previousResidentialAddress"] = {
+          :'level' => (self.entity[:previous_address][:level]),
+          :'suburb' => (self.entity[:previous_address][:suburb]),
+          :'state' => (self.entity[:previous_address][:state]),
+          :'postcode' => (self.entity[:previous_address][:postcode]),
+          :'country' => (self.entity[:previous_address][:country])
+      }
+    end
+
+    return info
   end
 
   def set_fields(source)
