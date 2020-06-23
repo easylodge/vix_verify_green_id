@@ -1,5 +1,5 @@
-class VixVerifyGreenId::Response < ActiveRecord::Base
-  self.table_name = "vix_verify_green_id_responses"
+class VixVerifyGreenId::RegistrationResponse < ActiveRecord::Base
+  self.table_name = "vix_verify_green_id_registration_responses"
   belongs_to :request, dependent: :destroy, inverse_of: :response
 
   serialize :headers
@@ -31,7 +31,7 @@ class VixVerifyGreenId::Response < ActiveRecord::Base
 
   def raw_result
     result = self.to_hash
-    result["Envelope"]["Body"]["setFieldsResponse"]["return"]
+    result["Envelope"]["Body"]["registerVerificationResponse"]["return"]
   rescue
     {}
   end
@@ -42,4 +42,13 @@ class VixVerifyGreenId::Response < ActiveRecord::Base
     nil
   end
 
+  def result_verification_id
+    raw_result["verificationResult"]["verificationId"]
+  rescue
+    nil
+  end
+
+  def result_verification_token
+    raw_result["verificationToken"]
+  end
 end

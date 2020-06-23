@@ -1,5 +1,6 @@
 class VixVerifyGreenId::Request < ActiveRecord::Base
   self.table_name = "vix_verify_green_id_requests"
+  has_one :registration_response, dependent: :destroy, inverse_of: :request
   has_one :response, dependent: :destroy, inverse_of: :request
   serialize :access
   serialize :entity
@@ -44,11 +45,29 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
             builder << to_dom(k, data[k]).root.to_xml
           end
         end
+      elsif data.is_a?(Array)
+        builder.send(node, attrs) do
+          data.each do |d|
+            builder << to_dom('input', d).root.to_xml
+          end
+        end
       else
         builder.send(node, data, attrs)
       end
     end
     doc.doc
+  end
+
+  def build_address(address)
+    {
+        :'streetNumber' => (address[:level]),
+        :'streetName' => (address[:street]),
+        :'streetType' => (address[:street_type]),
+        :'suburb' => (address[:suburb]),
+        :'state' => (address[:state]),
+        :'postcode' => (address[:postcode]),
+        :'country' => (address[:country])
+    }
   end
 
   def register_verification
@@ -59,21 +78,9 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
        :"surname" => self.entity[:family_name].to_s
     }
 
-    current_address = {
-        :'level' => (self.entity[:current_address][:level]),
-        :'suburb' => (self.entity[:current_address][:suburb]),
-        :'state' => (self.entity[:current_address][:state]),
-        :'postcode' => (self.entity[:current_address][:postcode]),
-        :'country' => (self.entity[:current_address][:country])
-    }
+    current_address = build_address(self.entity[:current_address])
 
-    previous_address = {
-        :'level' => (self.entity[:previous_address][:level]),
-        :'suburb' => (self.entity[:previous_address][:suburb]),
-        :'state' => (self.entity[:previous_address][:state]),
-        :'postcode' => (self.entity[:previous_address][:postcode]),
-        :'country' => (self.entity[:previous_address][:country])
-    }
+    previous_address = build_address(self.entity[:previous_address])
 
     dob = self.entity[:date_of_birth].to_date
 
@@ -100,31 +107,54 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
 
   def set_fields(source)
     { :'accountId' => account_id, :'password' => password ,
-      :'verificationId' => self.verification_id, :'sourceId' => source[:key],
+      :'verificationId' => self.registration_response.verification_id, :'sourceId' => source[:key],
       :'inputFields' => source[:values]
     }
   end
 
-  def source_field_values
-    passport_details = [
-        { input: { name: 'greenid_passportdvs_number', value: self.entity[:passport_number] } },
-        { input: { name: 'greenid_passportdvs_givenname', value: self.entity[:first_given_name].to_s} },
-        { input: { name: 'greenid_passportdvs_middlename', value: self.entity[:other_given_name].to_s } },
-        { input: { name: 'greenid_passportdvs_surname', value: self.entity[:family_name].to_s } },
-        { input: { name: 'greenid_passportdvs_dob', value: self.entity[:date_of_birth] } },
-        { input: { name: 'greenid_passportdvs_tandc', value: 'on' } }
-    ]
+  def license_key_prefix(state)
+    "#{state.downcase}regodvs"
+  end
 
+  def source_field_values
+    fields = []
+    state = (self.entity[:current_address][:state])
+    prefix = license_key_prefix(state)
+    given_name = self.entity[:first_given_name].to_s
+    middle_name = self.entity[:other_given_name].to_s
+    surname = self.entity[:family_name].to_s
+    dob = self.entity[:date_of_birth]
+
+    license_details = [
+        { name: "greenid_#{prefix}_number", value: self.entity[:drivers_licence_number] },
+        { name: "greenid_#{prefix}_givenname", value: given_name},
+        { name: "greenid_#{prefix}_middlename", value: middle_name },
+        { name: "greenid_#{prefix}_surname", value: surname },
+        { name: "greenid_#{prefix}_dob", value: dob },
+        { name: "greenid_#{prefix}_tandc", value: 'on' }
+    ]
+    fields << { key: prefix, values: license_details } if self.entity[:drivers_licence_number].presence
+
+    passport_details = [
+        { name: 'greenid_passportdvs_number', value: self.entity[:passport_number] },
+        { name: 'greenid_passportdvs_givenname', value: given_name},
+        { name: 'greenid_passportdvs_middlename', value: middle_name },
+        { name: 'greenid_passportdvs_surname', value: surname },
+        { name: 'greenid_passportdvs_dob', value: dob },
+        { name: 'greenid_passportdvs_tandc', value: 'on' }
+    ]
+    fields << { key: "passportdvs", values: passport_details } if self.entity[:passport_number].presence
 
     medicare_details = [
-        { input: { name: 'greenid_medicaredvs_number', value: (self.entity[:medicare_card_number]) } },
-        { input: { name: 'greenid_medicaredvs_nameOnCard', value: "#{self.entity[:family_name].to_s} #{self.entity[:other_given_name].to_s} #{self.entity[:first_given_name].to_s}" } },
-        { input: { name: 'greenid_medicaredvs_cardColour', value: (self.entity[:medicare_card_color]) } },
-        { input: { name: 'greenid_medicaredvs_individualReferenceNumber', value: (self.entity[:medicare_reference_number]) } },
-        { input: { name: 'greenid_medicaredvs_expiry', value: (self.entity[:medicare_card_expiry]) } },
-        { input: { name: 'greenid_medicaredvs_tandc', value: 'on' } } ]
-
-    [{ key: "passportdvs", values: passport_details }, { key: "medicaredvs", values: medicare_details }]
+        { name: 'greenid_medicaredvs_number', value: (self.entity[:medicare_card_number]) },
+        { name: 'greenid_medicaredvs_nameOnCard', value: "#{surname} #{middle_name} #{given_name}" },
+        { name: 'greenid_medicaredvs_cardColour', value: (self.entity[:medicare_card_color]) },
+        { name: 'greenid_medicaredvs_individualReferenceNumber', value: (self.entity[:medicare_reference_number]) },
+        { name: 'greenid_medicaredvs_expiry', value: (self.entity[:medicare_card_expiry]) },
+        { name: 'greenid_medicaredvs_tandc', value: 'on' }
+    ]
+    fields << { key: "medicaredvs", values: medicare_details } if self.entity[:medicare_card_number].presence
+    fields
   end
 
   def source_xml_body(source)
@@ -149,7 +179,18 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   def post
     self.to_soap
     if self.soap
-      HTTParty.post(self.access[:url], body: self.soap, headers: {'Content-Type' => 'text/xml', 'Accept' => 'text/xml'})
+      rv = HTTParty.post(self.access[:url], body: self.soap, headers: {'Content-Type' => 'text/xml', 'Accept' => 'text/xml'})
+      rr = self.create_registration_response!(code: rv.code, success: rv.success?, request_id: self.id, xml: rv.body, headers: rv.headers)
+
+      if rr.result_verification_token
+        rr.update_columns(verification_token: rr.result_verification_token, verification_id: rr.result_verification_id)
+      end
+
+      return rv unless source_field_values.any?
+
+      source_field_values.each do |source|
+        post_source(source)
+      end
     else
       "No soap envelope to post! - run to_soap"
     end
