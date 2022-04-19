@@ -129,7 +129,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   def source_field_values
     fields = []
     state = (self.entity[:current_address][:state])
-    prefix = license_key_prefix(state)
+    prefix = license_key_prefix(state) rescue nil
     given_name = self.entity[:first_given_name].to_s
     middle_name = self.entity[:other_given_name].to_s
     surname = self.entity[:family_name].to_s
@@ -192,13 +192,10 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
       rv = HTTParty.post(self.access[:url], body: self.soap, headers: req_headers)
       rr = self.registration_response || self.build_registration_response()
       rr.update_attributes(code: rv.code, success: rv.success?, request_id: self.id, xml: rv.body, headers: rv.headers)
-
       if rr.result_verification_token
         rr.update_columns(verification_token: rr.result_verification_token, verification_id: rr.result_verification_id)
       end
-
       return rv unless source_field_values.any?
-
       source_field_values.each do |source|
         rv = post_source(source)
       end
