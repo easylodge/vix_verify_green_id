@@ -123,13 +123,13 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   end
 
   def license_key_prefix(state)
-    "#{state.downcase}regodvs"
+    "#{state.downcase}regodvs" rescue nil
   end
 
   def source_field_values
     fields = []
     state = (self.entity[:current_address][:state])
-    prefix = license_key_prefix(state) rescue ""
+    prefix = license_key_prefix(state)
     given_name = self.entity[:first_given_name].to_s
     middle_name = self.entity[:other_given_name].to_s
     surname = self.entity[:family_name].to_s
