@@ -189,7 +189,6 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   def post
     self.to_soap
     if self.soap
-
       rv = HTTParty.post(self.access[:url], body: self.soap, headers: req_headers)
       rr = self.registration_response || self.build_registration_response()
       rr.update_attributes(code: rv.code, success: rv.success?, request_id: self.id, xml: rv.body, headers: rv.headers)
