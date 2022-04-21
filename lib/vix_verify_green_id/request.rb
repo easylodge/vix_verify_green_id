@@ -196,9 +196,8 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
       if rr.result_verification_token
         rr.update_columns(verification_token: rr.result_verification_token, verification_id: rr.result_verification_id)
       end
-      
-      return rv unless source_field_values.any?
 
+      return rv unless rv.success? && source_field_values.any?
       # The API will error if a subsequent request is sent after verification
       valid_states = ["VERIFIED", "VERIFIED_WITH_CHANGES", "VERIFIED_ADMIN"]
       source_field_values.each do |source|
