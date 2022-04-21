@@ -23,7 +23,8 @@ class VixVerifyGreenId::Response < ActiveRecord::Base
 
   def error
     if self.xml && !self.success?
-      self.xml
+      result = self.to_hash
+      result["Envelope"]["Body"]["Fault"]["detail"]["faultDetails"]["details"]
     else
       "No error"
     end
