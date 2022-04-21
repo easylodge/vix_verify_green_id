@@ -189,6 +189,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   def post
     self.to_soap
     if self.soap
+
       rv = HTTParty.post(self.access[:url], body: self.soap, headers: req_headers)
       rr = self.registration_response || self.build_registration_response()
       rr.update_attributes(code: rv.code, success: rv.success?, request_id: self.id, xml: rv.body, headers: rv.headers)
@@ -200,11 +201,15 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
       return rv unless source_field_values.any?
 
       # The API will error if a subsequent request is sent after verification
-      valid_states = ["VERIFIED", "VERIFIED_WITH_CHANGES", "VERIFIED_ADMIN"] 
+      valid_states = ["VERIFIED", "VERIFIED_WITH_CHANGES", "VERIFIED_ADMIN"]
       source_field_values.each do |source|
         rv = post_source(source)
-        state = rv["Envelope"]["Body"]["setFieldsResponse"]["return"]["checkResult"]["state"]
-        break if valid_states.include?(state)
+        if rv.success?
+          state = rv["Envelope"]["Body"]["setFieldsResponse"]["return"]["checkResult"]["state"]
+          break if valid_states.include?(state)
+        else
+          break
+        end
       end
       rv
     else
