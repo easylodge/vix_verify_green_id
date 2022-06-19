@@ -137,6 +137,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
 
     license_details = [
         { name: "greenid_#{prefix}_number", value: self.entity[:drivers_licence_number] },
+        { name: "greenid_#{prefix}_cardnumber", value: self.entity[:drivers_licence_card_number] },
         { name: "greenid_#{prefix}_givenname", value: given_name},
         { name: "greenid_#{prefix}_middlename", value: middle_name },
         { name: "greenid_#{prefix}_surname", value: surname },
