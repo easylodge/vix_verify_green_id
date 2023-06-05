@@ -157,6 +157,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
     fields << { key: "passportdvs", values: passport_details } if self.entity[:passport_number].presence
 
     medicare_details = [
+        { name: 'greenid_medicaredvs_initials', value: (self.entity[:medicare_middle_name_initials]) },
         { name: 'greenid_medicaredvs_number', value: (self.entity[:medicare_card_number]) },
         { name: 'greenid_medicaredvs_nameOnCard', value: "#{surname} #{middle_name} #{given_name}" },
         { name: 'greenid_medicaredvs_cardColour', value: (self.entity[:medicare_card_color]) },
