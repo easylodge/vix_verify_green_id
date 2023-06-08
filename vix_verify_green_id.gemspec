@@ -5,7 +5,7 @@ require "vix_verify_green_id/version"
 Gem::Specification.new do |spec|
   spec.name          = "vix_verify_green_id"
   spec.version       = VixVerifyGreenId::VERSION
-  spec.authors       = ["MonsieurSlim"]
+  spec.authors       = ["MonsieurSlim", "Jean le Roux"]
   spec.email         = ["luccy559slim@gmail.com", "support@easylodge.com.au"]
 
   spec.summary       = %q{Vix Verify's Green ID Identity Verification.}
