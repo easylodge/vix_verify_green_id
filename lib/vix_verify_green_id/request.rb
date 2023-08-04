@@ -118,7 +118,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
       info[:previousResidentialAddress] = build_address(entity[:previous_address])
     end
 
-    return info
+    info
   end
 
   # This section of code defines the structure of a person's name. It includes the following fields:
