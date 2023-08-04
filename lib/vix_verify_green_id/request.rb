@@ -62,63 +62,100 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
     doc.doc
   end
 
+  # This module includes methods for verifying GreenID requests. When creating a GreenID request, the entity_hash method is used to format the user's personal information. The formatted_address method is used to format the user's address information. The following are the requirements for the address fields in Australia:
+  # - propertyName: No (less than 256 characters)
+  # - flatNumber: No (less than 256 characters)
+  # - streetNumber: Yes (less than 256 characters)
+  # - streetName: Yes (less than 256 characters)
+  # - streetType: No (if present, must be one of the street types listed at AU Street Types, otherwise it will be discarded)
+  # - suburb: Yes (less than 256 characters)
+  # - postcode: Yes (must be 4 digits)
+  # - state: Yes (must be one of the following: ACT, NSW, NT, QLD, SA, TAS, VIC, WA)
+  # - country: Yes (must be AU)
   def build_address(address)
     {
-        :'streetNumber' => (address[:level]),
-        :'streetName' => (address[:street]),
-        :'streetType' => (address[:street_type]),
-        :'suburb' => (address[:suburb]),
-        :'state' => (address[:state]),
-        :'postcode' => (address[:postcode]),
-        :'country' => (address[:country])
+      country: address[:country],
+      postcode: address[:postcode],
+      state: address[:state],
+      streetName: address[:street],
+      streetNumber: address[:street_number],
+      streetType: address[:street_type],
+      suburb: address[:suburb]
     }
   end
 
+  # This section of code defines the structure of a GreenID request. It includes the following fields:
+  # - accountId: String. Yes. The account ID provided by GreenID.
+  # - password: String. Yes. The password provided by GreenID.
+  # - ruleId: String. No. The rule ID provided by GreenID. If not provided, the default rule will be used.
+  # - name: Hash. Yes. The person’s name. See the name_hash method for more details.
+  # - email: String. No. The person’s email address.
+  # - dob: Hash. Yes. The person’s date of birth. See the dob_hash method for more details.
+  # - homePhone: String. No. If present, must be 10 digits only.
+  # - workPhone: String. No. If present, must be 10 digits only.
+  # - mobilePhone: String. No. If present, must be 10 digits only.
+  # - currentResidentialAddress: Hash. No. The person’s current residential address. See the build_address method for more details.
+  # - previousResidentialAddress: Hash. No. The person’s previous residential address. See the build_address method for more details.
   def register_verification
-    info = {}
-
-    name = {
-       :"honorific" => self.entity[:title].to_s,
-       :"givenName" => self.entity[:first_given_name].to_s,
-       :"middleNames" => self.entity[:other_given_name].to_s,
-       :"surname" => self.entity[:family_name].to_s
+    info = {
+      accountId: account_id,
+      password: password,
+      ruleId: "default",
+      name: name_hash(),
+      email: entity[:email_address].to_s,
+      dob: dob_hash(),
+      homePhone: entity[:home_phone].to_s,
+      workPhone: entity[:mobile_phone].to_s,
+      mobilePhone: entity[:work_phone].to_s,
+      generateVerificationToken: true
     }
 
-    dob = (Date.parse(self.entity[:date_of_birth]) rescue nil)
-
-    date_of_birth = {
-      :"day" => dob&.day,
-      :"month" => dob&.month,
-      :"year" => dob&.year
-    }
-
-    info = { :"accountId" => account_id,
-      :"password" => password,
-      :"ruleId" => "default",
-      :"name" => name,
-      :"email" => self.entity[:email_address].to_s,
-      :"dob" => date_of_birth,
-      :"homePhone" => self.entity[:home_phone_number].to_s,
-      :"workPhone" => self.entity[:work_phone_number].to_s,
-      :"mobilePhone" => self.entity[:mobile_phone_number].to_s,
-      :"generateVerificationToken" => true
-    }
-
-    if self.entity[:current_address]
-      info[:"currentResidentialAddress"] = build_address(self.entity[:current_address])
+    if entity[:current_address].present?
+      info[:currentResidentialAddress] = build_address(entity[:current_address])
     end
 
-    if self.entity[:previous_address]
-      info[:"previousResidentialAddress"] = build_address(self.entity[:previous_address])
+    if entity[:previous_address].present?
+      info[:previousResidentialAddress] = build_address(entity[:previous_address])
     end
 
     return info
   end
 
+  # This section of code defines the structure of a person's name. It includes the following fields:
+  # - honorific: String. No. The honorific component of a person’s name, e.g., “Mr”, “Miss”, etc. Max 255 characters.
+  # - givenName: String. Yes. A person’s given name. Cannot be null. Cannot be the empty string. Max 255 characters.
+  # - middleNames: String. No. A person’s middle names. Note that there can be multiple names. Max 255 characters.
+  # - surname: String. Yes. A person’s surname or last name. Cannot be null. Cannot be the empty string. Max 255 characters.
+  def name_hash()
+    {
+      honorific: entity[:honorific].to_s,
+      givenName: entity[:given_name].to_s,
+      middleNames: entity[:middle_names].to_s,
+      surname: entity[:surname].to_s
+    }
+  end
+
+  # This method returns a hash containing the day, month, and year components of a date of birth.
+  # - day: int. The day component of a date of birth.
+  # - month: int. The month component of a date of birth.
+  # - year: int. The full year component of a date of birth, for example 1975, i.e. not 75.
+  def dob_hash()
+    dob = (Date.parse(entity[:date_of_birth]) rescue nil)
+
+    {
+      day: dob&.day,
+      month: dob&.month,
+      year: dob&.year
+    }
+  end
+
   def set_fields(source)
-    { :'accountId' => account_id, :'password' => password ,
-      :'verificationId' => self.registration_response.verification_id, :'sourceId' => source[:key],
-      :'inputFields' => source[:values]
+    {
+      accountId: account_id,
+      password: password ,
+      verificationId: self.registration_response.verification_id,
+      sourceId: source[:key],
+      inputFields: source[:values]
     }
   end
 
@@ -128,44 +165,53 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
 
   def source_field_values
     fields = []
-    state = (self.entity[:current_address][:state])
-    prefix = license_key_prefix(state)
-    given_name = self.entity[:first_given_name].to_s
-    middle_name = self.entity[:other_given_name].to_s
-    surname = self.entity[:family_name].to_s
-    dob = self.entity[:date_of_birth]
 
-    license_details = [
-        { name: "greenid_#{prefix}_number", value: self.entity[:drivers_licence_number] },
-        { name: "greenid_#{prefix}_cardnumber", value: self.entity[:drivers_licence_card_number] },
-        { name: "greenid_#{prefix}_givenname", value: given_name},
-        { name: "greenid_#{prefix}_middlename", value: middle_name },
-        { name: "greenid_#{prefix}_surname", value: surname },
-        { name: "greenid_#{prefix}_dob", value: dob },
-        { name: "greenid_#{prefix}_tandc", value: 'on' }
-    ]
-    fields << { key: prefix, values: license_details } if self.entity[:drivers_licence_number].presence
+    if entity[:drivers_licence_number].present?
+      prefix = license_key_prefix(entity[:current_address][:state])
 
-    passport_details = [
-        { name: 'greenid_passportdvs_number', value: self.entity[:passport_number] },
-        { name: 'greenid_passportdvs_givenname', value: given_name},
-        { name: 'greenid_passportdvs_middlename', value: middle_name },
-        { name: 'greenid_passportdvs_surname', value: surname },
-        { name: 'greenid_passportdvs_dob', value: dob },
-        { name: 'greenid_passportdvs_tandc', value: 'on' }
-    ]
-    fields << { key: "passportdvs", values: passport_details } if self.entity[:passport_number].presence
+      fields << {
+        key: prefix,
+        values: [
+          { name: "greenid_#{prefix}_number", value: entity[:drivers_licence_number] },
+          { name: "greenid_#{prefix}_cardnumber", value: entity[:drivers_licence_card_number] },
+          { name: "greenid_#{prefix}_givenname", value: entity[:given_name].to_s },
+          { name: "greenid_#{prefix}_middlename", value: entity[:middle_names].to_s },
+          { name: "greenid_#{prefix}_surname", value: entity[:surname].to_s },
+          { name: "greenid_#{prefix}_dob", value: entity[:date_of_birth] },
+          { name: "greenid_#{prefix}_tandc", value: 'on' }
+        ]
+      }
+    end
 
-    medicare_details = [
-        { name: 'greenid_medicaredvs_middleInitialOnCard', value: (self.entity[:medicare_middle_initial_on_card]) },
-        { name: 'greenid_medicaredvs_number', value: (self.entity[:medicare_card_number]) },
-        { name: 'greenid_medicaredvs_nameOnCard', value: "#{surname} #{middle_name} #{given_name}" },
-        { name: 'greenid_medicaredvs_cardColour', value: (self.entity[:medicare_card_color]) },
-        { name: 'greenid_medicaredvs_individualReferenceNumber', value: (self.entity[:medicare_reference_number]) },
-        { name: 'greenid_medicaredvs_expiry', value: (self.entity[:medicare_card_expiry]) },
-        { name: 'greenid_medicaredvs_tandc', value: 'on' }
-    ]
-    fields << { key: "medicaredvs", values: medicare_details } if self.entity[:medicare_card_number].presence
+    if entity[:passport_number].present?
+      fields << {
+        key: "passportdvs",
+        values: [
+          { name: 'greenid_passportdvs_number', value: entity[:passport_number] },
+          { name: 'greenid_passportdvs_givenname', value: entity[:given_name].to_s},
+          { name: 'greenid_passportdvs_middlename', value: entity[:middle_names].to_s },
+          { name: 'greenid_passportdvs_surname', value: entity[:surname].to_s },
+          { name: 'greenid_passportdvs_dob', value: entity[:date_of_birth] },
+          { name: 'greenid_passportdvs_tandc', value: 'on' }
+        ]
+      }
+    end
+
+    if self.entity[:medicare_card_number].present?
+      fields << {
+        key: "medicaredvs",
+        values: [
+          { name: 'greenid_medicaredvs_middleInitialOnCard', value: entity[:medicare_middle_initial_on_card] },
+          { name: 'greenid_medicaredvs_number', value: entity[:medicare_card_number] },
+          { name: 'greenid_medicaredvs_nameOnCard', value: "#{entity[:surname].to_s} #{entity[:middle_names].to_s} #{entity[:given_name].to_s}" },
+          { name: 'greenid_medicaredvs_cardColour', value: entity[:medicare_card_color] },
+          { name: 'greenid_medicaredvs_individualReferenceNumber', value: entity[:medicare_reference_number] },
+          { name: 'greenid_medicaredvs_expiry', value: entity[:medicare_card_expiry] },
+          { name: 'greenid_medicaredvs_tandc', value: 'on' }
+        ]
+      }
+    end
+
     fields
   end
 
