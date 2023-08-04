@@ -2,6 +2,7 @@
 
 Ruby gem to make requests to Vix Verify's Green ID Identity Verification service. Website: [https://www.vixverify.com](https://www.vixverify.com/greenid-services/)
 
+GreenID Documentation https://vixverify.atlassian.net/wiki/spaces/GREEN/overview?homepageId=8880204
 
 ## Installation
 
@@ -28,7 +29,48 @@ Then run migrations:
 
 ## Usage
 
-TODO: Write usage instructions here
+Example Request Entity:
+
+{
+  honorific: "Mr",
+  surname: "Doe",
+  given_name: "John",
+  middle_names: "William",
+  date_of_birth: "04/08/1993",
+  current_address: {
+    country: "AU",
+    postcode: 2290,
+    state: "NSW",
+    street_number: "Level",
+    street_type: "ST",
+    street: "1/60",
+    suburb: "Charlestown"
+  },
+  previous_address: {
+    country: "AU",
+    postcode: 2290,
+    state: "NSW",
+    street_number: "Level",
+    street_type: "ST",
+    street: "2/60",
+    suburb: "Rharlestown"
+  },
+  home_phone: "1234567890",
+  mobile_phone: "0412345678",
+  work_phone: "0987654321",
+  email_address: "first@example.com",
+  alternative_email_address: "second@example.com",
+  drivers_licence_number: "123456",
+  drivers_licence_state_code: "NSW",
+  drivers_licence_card_number: "1234567890",
+  passport_country_code: "Australian - Born in Australia",
+  passport_number: "1234567890",
+  medicare_middle_initial_on_card: "W",
+  medicare_card_number: "1234567890",
+  medicare_reference_number: 1,
+  medicare_card_color: "G",
+  medicare_card_expiry: "08/2024"
+}
 
 ## Development
 
