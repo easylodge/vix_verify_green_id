@@ -128,7 +128,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
 
   def source_field_values
     fields = []
-    state = (self.entity[:current_address][:state])
+    state = (self.entity[:drivers_licence_state_code])
     prefix = license_key_prefix(state)
     given_name = self.entity[:first_given_name].to_s
     middle_name = self.entity[:other_given_name].to_s
@@ -190,6 +190,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
 
   def post
     self.to_soap
+
     if self.soap
       rv = HTTParty.post(self.access[:url], body: self.soap, headers: req_headers)
       rr = self.registration_response || self.build_registration_response()
@@ -200,18 +201,13 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
       end
 
       return rv unless rv.success? && source_field_values.any?
+
       # The API will error if a subsequent request is sent after verification
-      valid_states = ["VERIFIED", "VERIFIED_WITH_CHANGES", "VERIFIED_ADMIN"]
       source_field_values.each do |source|
         rv = post_source(source)
-        if rv.success?
-          state = rv["Envelope"]["Body"]["setFieldsResponse"]["return"]["checkResult"]["state"]
-          break if valid_states.include?(state)
-        else
-          break
-        end
       end
-      rv
+
+      rv # return the last response
     else
       "No soap envelope to post! - run to_soap"
     end
