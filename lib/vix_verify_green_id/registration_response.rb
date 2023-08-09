@@ -6,9 +6,10 @@ class VixVerifyGreenId::RegistrationResponse < ActiveRecord::Base
   serialize :struct
 
   def initialize(options={})
-    if options[:headers]
+    if options && options[:headers]
       options[:headers] = (options[:headers].to_h rescue {}) unless options[:headers].is_a?(Hash)
     end
+
     super(options)
   end
 
