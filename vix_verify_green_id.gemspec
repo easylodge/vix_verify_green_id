@@ -29,7 +29,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "rspec-rails"
-  spec.add_development_dependency 'rails', '~> 4.0.0'
+  spec.add_development_dependency 'rails', '~> 7.0.0'
   spec.add_development_dependency 'sqlite3'
   spec.add_development_dependency 'shoulda-matchers', '~>2.8'
   spec.add_development_dependency 'pry'
