@@ -236,28 +236,24 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
 
   def post
     self.to_soap
+
     if self.soap
       rv = HTTParty.post(self.access[:url], body: self.soap, headers: req_headers)
       rr = self.registration_response || self.build_registration_response()
-      rr.update_attributes(code: rv.code, success: rv.success?, request_id: self.id, xml: rv.body, headers: rv.headers)
+      rr.update(code: rv.code, success: rv.success?, request_id: self.id, xml: rv.body, headers: rv.headers)
 
       if rr.result_verification_token
         rr.update_columns(verification_token: rr.result_verification_token, verification_id: rr.result_verification_id)
       end
 
       return rv unless rv.success? && source_field_values.any?
+
       # The API will error if a subsequent request is sent after verification
-      valid_states = ["VERIFIED", "VERIFIED_WITH_CHANGES", "VERIFIED_ADMIN"]
       source_field_values.each do |source|
         rv = post_source(source)
-        if rv.success?
-          state = rv["Envelope"]["Body"]["setFieldsResponse"]["return"]["checkResult"]["state"]
-          break if valid_states.include?(state)
-        else
-          break
-        end
       end
-      rv
+
+      rv # return the last response
     else
       "No soap envelope to post! - run to_soap"
     end
