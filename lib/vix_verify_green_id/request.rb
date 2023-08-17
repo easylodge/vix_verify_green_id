@@ -227,7 +227,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
         post_source(source)
       end
 
-      verification_result_body = verification_result_body(registration_response.result_verification_id)
+      verification_result_body = verification_result_body(response.result_verification_id)
       get_verification_result(verification_result_body)
     else
       "No soap envelope to post! - run to_soap"
