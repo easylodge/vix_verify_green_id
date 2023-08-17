@@ -203,31 +203,31 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
     self.to_soap
 
     if self.soap
-      request = HTTParty.post(self.access[:url], body: self.soap, headers: req_headers)
-      response = self.registration_response || self.build_registration_response()
+      local_request = HTTParty.post(self.access[:url], body: self.soap, headers: req_headers)
+      local_response = self.registration_response || self.build_registration_response()
 
-      response.update(code: request.code,
-        success: request.success?,
+      local_response.update(code: local_request.code,
+        success: local_request.success?,
         request_id: self.id,
-        xml: request.body,
-        headers: request.headers
+        xml: local_request.body,
+        headers: local_request.headers
       )
 
-      if response.result_verification_id
-        response.update_columns(verification_id: response.result_verification_id)
+      if local_response.result_verification_id
+        local_response.update_columns(verification_id: local_response.result_verification_id)
       end
 
-      if response.result_verification_token
-        response.update_columns(verification_token: response.result_verification_token)
+      if local_response.result_verification_token
+        local_response.update_columns(verification_token: local_response.result_verification_token)
       end
 
-      return request unless request.success? && source_field_values.any?
+      return local_request unless local_request.success? && source_field_values.any?
 
       source_field_values.each do |source|
         post_source(source)
       end
 
-      verification_request_xml = verification_result_body(response.result_verification_id)
+      verification_request_xml = verification_result_body(local_response.result_verification_id)
       get_verification_result(verification_request_xml)
     else
       "No soap envelope to post! - run to_soap"
