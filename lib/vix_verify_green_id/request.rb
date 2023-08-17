@@ -234,6 +234,19 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
     end
   end
 
+  def current_status(verification_id)
+    body = verification_result_body(verification_id)
+    request = get_verification_result(body)
+
+    return unless request.success?
+
+    begin
+      request.as_json["Envelope"]["Body"]["getVerificationResultResponse"]["return"]["verificationResult"]["overallVerificationStatus"]
+    rescue
+      nil
+    end
+  end
+
   def get_verification_result(verification_result_body)
     HTTParty.post(self.access[:url], body: add_envelope(verification_result_body), headers: req_headers)
   end
