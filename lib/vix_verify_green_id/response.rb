@@ -43,4 +43,10 @@ class VixVerifyGreenId::Response < ActiveRecord::Base
     nil
   end
 
+  def result_verification_id
+    self.to_hash["Envelope"]["Body"]["getVerificationResultResponse"]["return"]["verificationResult"]["verificationId"]
+  rescue
+    nil
+  end
+
 end
