@@ -234,8 +234,8 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
     end
   end
 
-  def current_status(verification_id)
-    body = verification_result_body(verification_id)
+  def current_status
+    body = verification_result_body(response.result_verification_id)
     request = get_verification_result(body)
 
     return unless request.success?
