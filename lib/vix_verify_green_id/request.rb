@@ -167,7 +167,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
     fields = []
 
     if entity[:drivers_licence_number].present?
-      prefix = license_key_prefix(entity[:current_address][:state])
+      prefix = license_key_prefix(entity[:drivers_licence_state_code])
 
       fields << {
         key: prefix,
