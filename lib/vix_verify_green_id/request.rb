@@ -105,8 +105,8 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
       email: entity[:email_address].to_s,
       dob: dob_hash(),
       homePhone: entity[:home_phone].to_s,
-      workPhone: entity[:mobile_phone].to_s,
-      mobilePhone: entity[:work_phone].to_s,
+      workPhone: entity[:work_phone].to_s,
+      mobilePhone: entity[:mobile_phone].to_s,
       generateVerificationToken: true
     }
 
