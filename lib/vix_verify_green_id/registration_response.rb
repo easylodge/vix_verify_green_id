@@ -51,5 +51,7 @@ class VixVerifyGreenId::RegistrationResponse < ActiveRecord::Base
 
   def result_verification_token
     raw_result["verificationToken"]
+  rescue
+    nil
   end
 end
