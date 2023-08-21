@@ -198,12 +198,18 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
     end
 
     if self.entity[:medicare_card_number].present?
+      medicare_combined_name = if entity[:middle_names].to_s.length > 0
+        [entity[:given_name].to_s, entity[:middle_names].to_s.first, entity[:surname].to_s].join(' ')
+      else
+        [entity[:given_name].to_s, entity[:surname].to_s].join(' ')
+      end
+
       fields << {
         key: "medicaredvs",
         values: [
           { name: 'greenid_medicaredvs_middleInitialOnCard', value: entity[:medicare_middle_initial_on_card] },
           { name: 'greenid_medicaredvs_number', value: entity[:medicare_card_number] },
-          { name: 'greenid_medicaredvs_nameOnCard', value: "#{entity[:surname].to_s} #{entity[:middle_names].to_s} #{entity[:given_name].to_s}" },
+          { name: 'greenid_medicaredvs_nameOnCard', value: medicare_combined_name },
           { name: 'greenid_medicaredvs_cardColour', value: entity[:medicare_card_color] },
           { name: 'greenid_medicaredvs_individualReferenceNumber', value: entity[:medicare_reference_number] },
           { name: 'greenid_medicaredvs_expiry', value: entity[:medicare_card_expiry] },
