@@ -175,7 +175,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
           { name: "greenid_#{prefix}_number", value: entity[:drivers_licence_number] },
           { name: "greenid_#{prefix}_cardnumber", value: entity[:drivers_licence_card_number] },
           { name: "greenid_#{prefix}_givenname", value: entity[:given_name].to_s },
-          { name: "greenid_#{prefix}_middlename", value: entity[:middle_names].to_s },
+          { name: "greenid_#{prefix}_middlenames", value: entity[:middle_names].to_s },
           { name: "greenid_#{prefix}_surname", value: entity[:surname].to_s },
           { name: "greenid_#{prefix}_dob", value: entity[:date_of_birth] },
           { name: "greenid_#{prefix}_tandc", value: 'on' }
