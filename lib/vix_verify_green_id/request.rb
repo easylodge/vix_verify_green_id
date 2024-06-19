@@ -301,7 +301,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   end
 
   def get_verification_result(verification_result_body)
-    res = HTTParty.post(self.access[:url], body: add_envelope(verification_result_body), headers: req_headers)
+    HTTParty.post(self.access[:url], body: add_envelope(verification_result_body), headers: req_headers)
   end
 
   def post_source(source)
