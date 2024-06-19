@@ -75,7 +75,6 @@ class VixVerifyGreenId::Response < ActiveRecord::Base
     sources = result["Envelope"]["Body"]["getVerificationResultResponse"]["return"]["sourceList"]["source"]
     sources = [sources] if sources.is_a?(Hash)
     sources.each_with_object([]) do |source, arr|
-      next if source["state"] == "EMPTY"
       arr << {
         name: SOURCE_ABBR_MAP[source["name"].to_sym],
         passed: source["passed"],
