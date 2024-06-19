@@ -305,6 +305,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   end
 
   def post_source(source)
+    binding.pry
     HTTParty.post(self.access[:url], body: add_envelope(source_xml_body(source)), headers: req_headers)
   end
 end
