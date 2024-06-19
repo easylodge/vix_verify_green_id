@@ -213,6 +213,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
           { name: 'greenid_medicaredvs_cardColour', value: entity[:medicare_card_color] },
           { name: 'greenid_medicaredvs_individualReferenceNumber', value: entity[:medicare_reference_number] },
           { name: 'greenid_medicaredvs_expiry', value: entity[:medicare_card_expiry] },
+          { name: 'greenid_medicaredvs_dob', value: entity[:date_of_birth]},
           { name: 'greenid_medicaredvs_tandc', value: 'on' }
         ]
       }
