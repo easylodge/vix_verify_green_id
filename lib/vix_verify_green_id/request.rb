@@ -189,7 +189,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
         values: [
           { name: 'greenid_passportdvs_number', value: entity[:passport_number] },
           { name: 'greenid_passportdvs_givenname', value: entity[:given_name].to_s},
-          { name: 'greenid_passportdvs_middlename', value: entity[:middle_names].to_s },
+          { name: 'greenid_passportdvs_middlenames', value: entity[:middle_names].to_s },
           { name: 'greenid_passportdvs_surname', value: entity[:surname].to_s },
           { name: 'greenid_passportdvs_dob', value: entity[:date_of_birth] },
           { name: 'greenid_passportdvs_tandc', value: 'on' }
