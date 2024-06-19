@@ -1,6 +1,4 @@
 class VixVerifyGreenId::Request < ActiveRecord::Base
-  self.logger = Logger.new(STDOUT)
-  self.logger.level = Logger::DEBUG
   self.table_name = "vix_verify_green_id_requests"
   has_one :registration_response, dependent: :destroy, inverse_of: :request
   has_one :response, dependent: :destroy, inverse_of: :request
@@ -254,7 +252,6 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   end
 
   def post
-    logger.info "Registration Request"
     self.to_soap
 
     if self.soap
@@ -307,8 +304,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   end
 
   def post_source(source)
-    logger.info "set field #{source.to_s}"
+    binding.pry
     res = HTTParty.post(self.access[:url], body: add_envelope(source_xml_body(source)), headers: req_headers)
-    logger.info "set field #{res.to_s}"
   end
 end
