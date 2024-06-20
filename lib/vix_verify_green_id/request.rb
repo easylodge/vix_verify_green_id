@@ -175,7 +175,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
           { name: "greenid_#{prefix}_number", value: entity[:drivers_licence_number] },
           { name: "greenid_#{prefix}_cardnumber", value: entity[:drivers_licence_card_number] },
           { name: "greenid_#{prefix}_givenname", value: entity[:given_name].to_s },
-          { name: "greenid_#{prefix}_middlename", value: entity[:middle_names].to_s },
+          { name: "greenid_#{prefix}_middlenames", value: entity[:middle_names].to_s },
           { name: "greenid_#{prefix}_surname", value: entity[:surname].to_s },
           { name: "greenid_#{prefix}_dob", value: entity[:date_of_birth] },
           { name: "greenid_#{prefix}_tandc", value: 'on' }
@@ -189,7 +189,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
         values: [
           { name: 'greenid_passportdvs_number', value: entity[:passport_number] },
           { name: 'greenid_passportdvs_givenname', value: entity[:given_name].to_s},
-          { name: 'greenid_passportdvs_middlename', value: entity[:middle_names].to_s },
+          { name: 'greenid_passportdvs_middlenames', value: entity[:middle_names].to_s },
           { name: 'greenid_passportdvs_surname', value: entity[:surname].to_s },
           { name: 'greenid_passportdvs_dob', value: entity[:date_of_birth] },
           { name: 'greenid_passportdvs_tandc', value: 'on' }
@@ -213,6 +213,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
           { name: 'greenid_medicaredvs_cardColour', value: entity[:medicare_card_color] },
           { name: 'greenid_medicaredvs_individualReferenceNumber', value: entity[:medicare_reference_number] },
           { name: 'greenid_medicaredvs_expiry', value: entity[:medicare_card_expiry] },
+          { name: 'greenid_medicaredvs_dob', value: entity[:date_of_birth]},
           { name: 'greenid_medicaredvs_tandc', value: 'on' }
         ]
       }
