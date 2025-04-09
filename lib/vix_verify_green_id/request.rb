@@ -184,15 +184,16 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
     end
 
     if entity[:passport_number].present?
+      prefix = entity[:passport_country] == "Australia" ? "greenid_passportdvs" : "greenid_visadvs"
       fields << {
         key: "passportdvs",
         values: [
-          { name: 'greenid_passportdvs_number', value: entity[:passport_number] },
-          { name: 'greenid_passportdvs_givenname', value: entity[:given_name].to_s},
-          { name: 'greenid_passportdvs_middlenames', value: entity[:middle_names].to_s },
-          { name: 'greenid_passportdvs_surname', value: entity[:surname].to_s },
-          { name: 'greenid_passportdvs_dob', value: entity[:date_of_birth] },
-          { name: 'greenid_passportdvs_tandc', value: 'on' }
+          { name: "#{prefix}_number", value: entity[:passport_number] },
+          { name: "#{prefix}_givenname", value: entity[:given_name].to_s},
+          { name: "#{prefix}_middlenames", value: entity[:middle_names].to_s },
+          { name: "#{prefix}_surname", value: entity[:surname].to_s },
+          { name: "#{prefix}_dob", value: entity[:date_of_birth] },
+          { name: "#{prefix}_tandc", value: 'on' }
         ]
       }
     end
