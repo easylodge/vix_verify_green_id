@@ -101,9 +101,9 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
       accountId: account_id,
       password: password,
       ruleId: "default",
-      name: name_hash(),
+      name: name_hash,
       email: entity[:email_address].to_s,
-      dob: dob_hash(),
+      dob: dob_hash,
       homePhone: entity[:home_phone].to_s,
       workPhone: entity[:work_phone].to_s,
       mobilePhone: entity[:mobile_phone].to_s,
@@ -126,7 +126,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   # - givenName: String. Yes. A person’s given name. Cannot be null. Cannot be the empty string. Max 255 characters.
   # - middleNames: String. No. A person’s middle names. Note that there can be multiple names. Max 255 characters.
   # - surname: String. Yes. A person’s surname or last name. Cannot be null. Cannot be the empty string. Max 255 characters.
-  def name_hash()
+  def name_hash
     {
       honorific: entity[:honorific].to_s,
       givenName: entity[:given_name].to_s,
@@ -139,8 +139,8 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
   # - day: int. The day component of a date of birth.
   # - month: int. The month component of a date of birth.
   # - year: int. The full year component of a date of birth, for example 1975, i.e. not 75.
-  def dob_hash()
-    dob = (Date.parse(entity[:date_of_birth]) rescue nil)
+  def dob_hash
+    dob = entity[:date_of_birth].to_date
 
     {
       day: dob&.day,
@@ -258,7 +258,7 @@ class VixVerifyGreenId::Request < ActiveRecord::Base
 
     if self.soap
       local_request = HTTParty.post(self.access[:url], body: self.soap, headers: req_headers)
-      local_response = self.registration_response || self.build_registration_response()
+      local_response = self.registration_response || self.build_registration_response
 
       local_response.update(code: local_request.code,
         success: local_request.success?,
